@@ -5,8 +5,8 @@ from bravado_core.response import IncomingResponse
 from mock import Mock
 from mock import patch
 
+from aiobravado.http_future import AIOHttpFuture
 from aiobravado.http_future import FutureAdapter
-from aiobravado.http_future import HttpFuture
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def mock_unmarshal_response():
 def test_200_get_swagger_spec(mock_future_adapter, event_loop):
     response_adapter_instance = Mock(spec=IncomingResponse, status_code=200)
     response_adapter_type = Mock(return_value=response_adapter_instance)
-    http_future = HttpFuture(
+    http_future = AIOHttpFuture(
         future=mock_future_adapter,
         response_adapter=response_adapter_type)
 
@@ -41,7 +41,7 @@ def test_500_get_swagger_spec(mock_future_adapter, event_loop):
 
     with pytest.raises(HTTPError) as excinfo:
         event_loop.run_until_complete(
-            HttpFuture(
+            AIOHttpFuture(
                 future=mock_future_adapter,
                 response_adapter=response_adapter_type,
             ).result()
@@ -58,7 +58,7 @@ def test_200_service_call(mock_unmarshal_response, mock_future_adapter, event_lo
 
     response_adapter_type = Mock(return_value=response_adapter_instance)
 
-    http_future = HttpFuture(
+    http_future = AIOHttpFuture(
         future=mock_future_adapter,
         response_adapter=response_adapter_type,
         operation=Mock(spec=Operation))
@@ -75,7 +75,7 @@ def test_400_service_call(mock_unmarshal_response, mock_future_adapter, event_lo
     mock_unmarshal_response.side_effect = HTTPError(response_adapter_instance)
     response_adapter_type = Mock(return_value=response_adapter_instance)
 
-    http_future = HttpFuture(
+    http_future = AIOHttpFuture(
         future=mock_future_adapter,
         response_adapter=response_adapter_type,
         operation=Mock(spec=Operation))
@@ -86,7 +86,7 @@ def test_400_service_call(mock_unmarshal_response, mock_future_adapter, event_lo
 
 
 def test_also_return_response_true(mock_unmarshal_response, mock_future_adapter, event_loop):
-    # Verify HTTPFuture(..., also_return_response=True).result()
+    # Verify AIOHttpFuture(..., also_return_response=True).result()
     # returns the (swagger_result, http_response) and not just swagger_result
     response_adapter_instance = Mock(
         spec=IncomingResponse,
@@ -94,7 +94,7 @@ def test_also_return_response_true(mock_unmarshal_response, mock_future_adapter,
         swagger_result='hello world')
     response_adapter_type = Mock(return_value=response_adapter_instance)
 
-    http_future = HttpFuture(
+    http_future = AIOHttpFuture(
         future=mock_future_adapter,
         response_adapter=response_adapter_type,
         operation=Mock(spec=Operation),

@@ -1,10 +1,14 @@
+# TODO: refactor bravado to define unmarshal_response_inner too
 import sys
-from functools import wraps
 
 import six
 import umsgpack
-from bravado.exception import BravadoTimeoutError
 from bravado.exception import make_http_exception
+from bravado.http_future import FutureAdapter
+from bravado.http_future import HttpFuture
+from bravado.http_future import raise_on_expected
+from bravado.http_future import raise_on_unexpected
+from bravado.http_future import reraise_errors
 from bravado_core.content_type import APP_JSON
 from bravado_core.content_type import APP_MSGPACK
 from bravado_core.exception import MatchingResponseNotFound
@@ -13,18 +17,14 @@ from bravado_core.unmarshal import unmarshal_schema_object
 from bravado_core.validate import validate_schema_object
 
 
-class FutureAdapter(object):
+class AIOFutureAdapter(FutureAdapter):
     """
     Mimics a :class:`concurrent.futures.Future` regardless of which client is
     performing the request, whether it is synchronous or actually asynchronous.
 
     This adapter must be implemented by all aiobravado clients such as FidoClient
     or RequestsClient to wrap the object returned by their 'request' method.
-
     """
-
-    # Make sure to define the timeout errors associated with your http client
-    timeout_errors = []
 
     async def result(self, timeout=None):
         """
@@ -38,66 +38,7 @@ class FutureAdapter(object):
         )
 
 
-def reraise_errors(func):
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        timeout_errors = tuple(getattr(self.future, 'timeout_errors', None) or ())
-
-        # Make sure that timeout error type for a specific future adapter is generated only once
-        if timeout_errors and getattr(self.future, '__timeout_error_type', None) is None:
-            setattr(
-                self.future, '__timeout_error_type',
-                type(
-                    '{}Timeout'.format(self.future.__class__.__name__),
-                    tuple(list(timeout_errors) + [BravadoTimeoutError]),
-                    dict(),
-                ),
-            )
-
-        if timeout_errors:
-            try:
-                return func(self, *args, **kwargs)
-            except timeout_errors as exception:
-                six.reraise(
-                    self.future.__timeout_error_type,
-                    self.future.__timeout_error_type(*exception.args),
-                    sys.exc_info()[2],
-                )
-        else:
-            return func(self, *args, **kwargs)
-
-    return wrapper
-
-
-class HttpFuture():
-    """Wrapper for a :class:`FutureAdapter` that returns an HTTP response.
-
-    :param future: The future object to wrap.
-    :type future: :class: `FutureAdapter`
-    :param response_adapter: Adapter type which exposes the innards of the HTTP
-        response in a non-http client specific way.
-    :type response_adapter: type that is a subclass of
-        :class:`bravado_core.response.IncomingResponse`.
-    :param response_callbacks: See aiobravado.client.REQUEST_OPTIONS_DEFAULTS
-    :param also_return_response: Determines if the incoming http response is
-        included as part of the return value from calling
-        `HttpFuture.result()`.
-        When False, only the swagger result is returned.
-        When True, the tuple(swagger result, http response) is returned.
-        This is useful if you want access to additional data that is not
-        accessible from the swagger result. e.g. http headers,
-        http response code, etc.
-        Defaults to False for backwards compatibility.
-    """
-
-    def __init__(self, future, response_adapter, operation=None,
-                 response_callbacks=None, also_return_response=False):
-        self.future = future
-        self.response_adapter = response_adapter
-        self.operation = operation
-        self.response_callbacks = response_callbacks or []
-        self.also_return_response = also_return_response
-
+class AIOHttpFuture(HttpFuture):
     @reraise_errors
     async def result(self, timeout=None):
         """Blocking call to wait for the HTTP response.
@@ -162,7 +103,8 @@ async def unmarshal_response(incoming_response, operation, response_callbacks=No
         six.reraise(
             type(exception),
             exception,
-            sys.exc_info()[2])
+            sys.exc_info()[2],
+        )
     finally:
         # Always run the callbacks regardless of success/failure
         for response_callback in response_callbacks:
@@ -205,26 +147,3 @@ async def unmarshal_response_inner(response, op):
 
     # TODO: Non-json response contents
     return response.text
-
-
-def raise_on_unexpected(http_response):
-    """Raise an HTTPError if the response is 5XX.
-
-    :param http_response: :class:`bravado_core.response.IncomingResponse`
-    :raises: HTTPError
-    """
-    if 500 <= http_response.status_code <= 599:
-        raise make_http_exception(response=http_response)
-
-
-def raise_on_expected(http_response):
-    """Raise an HTTPError if the response is non-2XX and matches a response
-    in the swagger spec.
-
-    :param http_response: :class:`bravado_core.response.IncomingResponse`
-    :raises: HTTPError
-    """
-    if not 200 <= http_response.status_code < 300:
-        raise make_http_exception(
-            response=http_response,
-            swagger_result=http_response.swagger_result)

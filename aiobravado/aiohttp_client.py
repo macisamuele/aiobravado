@@ -11,8 +11,8 @@ from aiohttp.formdata import FormData
 from bravado.http_client import HttpClient
 from bravado_core.response import IncomingResponse
 
+from aiobravado.http_future import AIOHttpFuture
 from aiobravado.http_future import FutureAdapter
-from aiobravado.http_future import HttpFuture
 
 
 log = logging.getLogger(__name__)
@@ -131,7 +131,7 @@ class AiohttpClient(HttpClient):
 
         future = asyncio.ensure_future(coroutine)
 
-        return HttpFuture(
+        return AIOHttpFuture(
             AsyncioFutureAdapter(future),
             AioHTTPResponseAdapter,
             operation,
