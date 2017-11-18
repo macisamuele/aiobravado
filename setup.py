@@ -29,9 +29,7 @@ setup(
     ],
     install_requires=[
         'aiohttp',
-        'bravado-core >= 4.2.2',
-        'python-dateutil',
-        'pyyaml',
+        'bravado',
     ],
     extras_require={
         # as recommended by aiohttp, see http://aiohttp.readthedocs.io/en/stable/#library-installation
