@@ -1,13 +1,11 @@
-import contextlib
 import logging
 import os
 import os.path
 from urllib.parse import urljoin
 from urllib.parse import urlparse
 from urllib.request import pathname2url
-from urllib.request import urlopen
 
-import yaml
+from bravado import swagger_model
 from bravado_core.spec import is_yaml
 
 from aiobravado.aiohttp_client import AiohttpClient
@@ -20,11 +18,7 @@ def is_file_scheme_uri(url):
     return urlparse(url).scheme == 'file'
 
 
-class FileEventual(object):
-    """Adaptor which supports the :class:`crochet.EventualResult`
-    interface for retrieving api docs from a local file.
-    """
-
+class AIOFileEventual(swagger_model.FileEventual):
     class FileResponse(object):
 
         def __init__(self, data):
@@ -38,57 +32,27 @@ class FileEventual(object):
         async def json(self):
             return json.loads(self._text.decode('utf-8'))
 
-    def __init__(self, path):
-        self.path = path
-        self.is_yaml = is_yaml(path)
-
-    def get_path(self):
-        if not self.path.endswith('.json') and not self.is_yaml:
-            return self.path + '.json'
-        return self.path
-
-    def wait(self, **kwargs):
-        with contextlib.closing(urlopen(self.get_path())) as fp:
-            content = fp.read()
-            return self.FileResponse(content)
-
     async def result(self, *args, **kwargs):
         return self.wait(*args, **kwargs)
-
-    def cancel(self):
-        pass
 
 
 def request(http_client, url, headers):
     """Download and parse JSON from a URL.
 
-    :param http_client: a :class:`aiobravado.http_client.HttpClient`
+    :param http_client: a :class:`bravado.http_client.HttpClient`
     :param url: url for api docs
     :return: an object with a :func`wait` method which returns the api docs
     """
     if is_file_scheme_uri(url):
-        return FileEventual(url)
-
-    request_params = {
-        'method': 'GET',
-        'url': url,
-        'headers': headers,
-    }
-
-    return http_client.request(request_params)
+        return AIOFileEventual(url)
+    else:
+        return swagger_model.request(http_client=http_client, url=url, headers=headers)
 
 
-class Loader(object):
-    """Abstraction for loading Swagger API's.
-
-    :param http_client: HTTP client interface.
-    :type  http_client: http_client.HttpClient
-    :param request_headers: dict of request headers
+class AIOLoader(swagger_model.Loader):
     """
-
-    def __init__(self, http_client, request_headers=None):
-        self.http_client = http_client
-        self.request_headers = request_headers or {}
+    AsyncIO Abstraction for loading Swagger API's.
+    """
 
     async def load_spec(self, spec_url, base_url=None):
         """Load a Swagger Spec from the given URL
@@ -108,27 +72,6 @@ class Loader(object):
             return self.load_yaml(await response.text)
         else:
             return await response.json()
-
-    def load_yaml(self, text):
-        """Load a YAML Swagger spec from the given string, transforming
-        integer response status codes to strings. This is to keep
-        compatibility with the existing YAML spec examples in
-        https://github.com/OAI/OpenAPI-Specification/tree/master/examples/v2.0/yaml
-        :param text: String from which to parse the YAML.
-        :type  text: basestring
-        :return: Python dictionary representing the spec.
-        :raise: yaml.parser.ParserError: If the text is not valid YAML.
-        """
-        data = yaml.safe_load(text)
-        for methods in data.get('paths', {}).values():
-            for operation in methods.values():
-                if 'responses' in operation:
-                    operation['responses'] = {
-                        str(code): response
-                        for code, response in operation['responses'].items()
-                    }
-
-        return data
 
 
 # TODO: Adding the file scheme here just adds complexity to request()
@@ -163,5 +106,5 @@ async def load_url(spec_url, http_client=None, base_url=None):
     if http_client is None:
         http_client = AiohttpClient()
 
-    loader = Loader(http_client=http_client)
+    loader = AIOLoader(http_client=http_client)
     return await loader.load_spec(spec_url, base_url=base_url)

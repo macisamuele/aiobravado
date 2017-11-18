@@ -54,7 +54,7 @@ from bravado.client import Spec  # noqa
 from bravado.client import SwaggerClient as SyncSwaggerClient
 
 from aiobravado.aiohttp_client import AiohttpClient
-from aiobravado.swagger_model import Loader
+from aiobravado.swagger_model import AIOLoader
 
 log = logging.getLogger(__name__)
 
@@ -77,9 +77,9 @@ class SwaggerClient(SyncSwaggerClient):
 
         :rtype: :class:`bravado_core.spec.Spec`
         """
-        log.debug(u"Loading from %s", spec_url)
+        log.debug('Loading from %s', spec_url)
         http_client = http_client or AiohttpClient()
-        loader = Loader(http_client, request_headers=request_headers)
+        loader = AIOLoader(http_client, request_headers=request_headers)
         spec_dict = await loader.load_spec(spec_url)
 
         # RefResolver may have to download additional json files (remote refs)

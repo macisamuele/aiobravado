@@ -1,6 +1,6 @@
 import pytest
 
-from aiobravado.swagger_model import Loader
+from aiobravado.swagger_model import AIOLoader
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ paths:
 
 
 def test_load_yaml(yaml_spec):
-    loader = Loader(None)
+    loader = AIOLoader(None)
     result = loader.load_yaml(yaml_spec)
 
     assert result == {
