@@ -2,11 +2,11 @@ import threading
 import time
 
 import bottle
-import ephemeral_port_reserve
 import pytest
 import umsgpack
 from bravado_core.content_type import APP_JSON
 from bravado_core.content_type import APP_MSGPACK
+from pytest_asyncio.plugin import unused_tcp_port
 from six.moves import urllib
 
 
@@ -112,7 +112,7 @@ def wait_unit_service_starts(url, timeout=10):
 
 @pytest.yield_fixture(scope='session')
 def threaded_http_server():
-    port = ephemeral_port_reserve.reserve()
+    port = unused_tcp_port()
     thread = threading.Thread(
         target=bottle.run, kwargs={'host': 'localhost', 'port': port},
     )

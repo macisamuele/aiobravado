@@ -4,8 +4,8 @@ import subprocess
 import time
 import urllib
 
-import ephemeral_port_reserve
 import pytest
+from pytest_asyncio.plugin import unused_tcp_port
 
 
 def wait_unit_service_starts(url, timeout=10):
@@ -22,7 +22,7 @@ def wait_unit_service_starts(url, timeout=10):
 @pytest.fixture(scope='session')
 def integration_server():
     script_name = os.path.join(os.path.dirname(__file__), '../../testing/integration_server.py')
-    server_port = ephemeral_port_reserve.reserve()
+    server_port = unused_tcp_port()
     server = subprocess.Popen(
         ['python', script_name, '-p', str(server_port)],
         stdin=None, stdout=subprocess.DEVNULL, stderr=None,
