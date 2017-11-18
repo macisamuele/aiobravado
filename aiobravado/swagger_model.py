@@ -2,13 +2,13 @@ import contextlib
 import logging
 import os
 import os.path
+from urllib.parse import urljoin
+from urllib.parse import urlparse
+from urllib.request import pathname2url
+from urllib.request import urlopen
 
 import yaml
 from bravado_core.spec import is_yaml
-from six import iteritems
-from six import itervalues
-from six.moves import urllib
-from six.moves.urllib import parse as urlparse
 
 from aiobravado.aiohttp_client import AiohttpClient
 from aiobravado.compat import json
@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 
 def is_file_scheme_uri(url):
-    return urlparse.urlparse(url).scheme == u'file'
+    return urlparse(url).scheme == 'file'
 
 
 class FileEventual(object):
@@ -48,7 +48,7 @@ class FileEventual(object):
         return self.path
 
     def wait(self, **kwargs):
-        with contextlib.closing(urllib.request.urlopen(self.get_path())) as fp:
+        with contextlib.closing(urlopen(self.get_path())) as fp:
             content = fp.read()
             return self.FileResponse(content)
 
@@ -120,12 +120,12 @@ class Loader(object):
         :raise: yaml.parser.ParserError: If the text is not valid YAML.
         """
         data = yaml.safe_load(text)
-        for methods in itervalues(data.get('paths', {})):
-            for operation in itervalues(methods):
+        for methods in data.get('paths', {}).values():
+            for operation in methods.values():
                 if 'responses' in operation:
                     operation['responses'] = {
                         str(code): response
-                        for code, response in iteritems(operation['responses'])
+                        for code, response in operation['responses'].items()
                     }
 
         return data
@@ -142,10 +142,10 @@ async def load_file(spec_file, http_client=None):
     :raise: IOError: On error reading swagger.json.
     """
     file_path = os.path.abspath(spec_file)
-    url = urlparse.urljoin(u'file:', urllib.request.pathname2url(file_path))
+    url = urljoin('file:', pathname2url(file_path))
     # When loading from files, everything is relative to the spec file
     dir_path = os.path.dirname(file_path)
-    base_url = urlparse.urljoin(u'file:', urllib.request.pathname2url(dir_path))
+    base_url = urljoin('file:', pathname2url(dir_path))
     return await load_url(url, http_client=http_client, base_url=base_url)
 
 
