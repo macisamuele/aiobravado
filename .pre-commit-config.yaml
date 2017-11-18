@@ -7,7 +7,6 @@
         - --ignore=E309,E501
     -   id: check-json
     -   id: check-yaml
-    -   id: fix-encoding-pragma
     -   id: debug-statements
     -   id: end-of-file-fixer
     -   id: flake8

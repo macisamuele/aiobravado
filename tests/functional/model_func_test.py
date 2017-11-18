@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Functional tests related to passing models in req/response
 """

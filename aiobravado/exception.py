@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 try:
     from builtins import TimeoutError as base_exception
 except ImportError:

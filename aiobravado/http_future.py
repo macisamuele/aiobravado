@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 import sys
 from functools import wraps
 
 import six
 import umsgpack
-from bravado_core.content_type import APP_JSON, APP_MSGPACK
+from bravado_core.content_type import APP_JSON
+from bravado_core.content_type import APP_MSGPACK
 from bravado_core.exception import MatchingResponseNotFound
 from bravado_core.response import get_response_spec
 from bravado_core.unmarshal import unmarshal_schema_object

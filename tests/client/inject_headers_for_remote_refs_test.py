@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from bravado_core.operation import Operation
 from mock import Mock
 

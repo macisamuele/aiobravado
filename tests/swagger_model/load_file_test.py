@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 from aiobravado.swagger_model import load_file

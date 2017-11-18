@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 def test_200_success(petstore):
     User = petstore.get_model('User')
     user = User(

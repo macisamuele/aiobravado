@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 APP_FORM = 'application/x-www-form-urlencoded'
 MULT_FORM = 'multipart/form-data'
 

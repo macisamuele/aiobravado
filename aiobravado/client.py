@@ -52,11 +52,10 @@ from bravado_core.spec import Spec
 from six import iteritems
 from six import itervalues
 
+from aiobravado.aiohttp_client import AiohttpClient
 from aiobravado.docstring_property import docstring_property
 from aiobravado.swagger_model import Loader
 from aiobravado.warning import warn_for_deprecated_op
-
-from aiobravado.aiohttp_client import AiohttpClient
 
 log = logging.getLogger(__name__)
 

@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 import functools
 import json
 
-from mocket.mocket import Mocketizer
-from mocket.plugins.httpretty import HTTPretty
 import pytest
 import yaml
+from mocket.mocket import Mocketizer
+from mocket.plugins.httpretty import HTTPretty
 
 from aiobravado import aiohttp_client
 from aiobravado.client import SwaggerClient

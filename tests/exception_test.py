@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
 import mock
 import pytest
 from aiohttp import ClientResponse
 
+from aiobravado.aiohttp_client import AioHTTPResponseAdapter
+from aiobravado.aiohttp_client import AsyncioResponse
 from aiobravado.exception import HTTPError
 from aiobravado.exception import HTTPInternalServerError
 from aiobravado.exception import HTTPServerError
 from aiobravado.exception import make_http_exception
-from aiobravado.aiohttp_client import AioHTTPResponseAdapter, AsyncioResponse
 
 
 @pytest.fixture

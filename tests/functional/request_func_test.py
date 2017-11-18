@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Request related functional tests
 """

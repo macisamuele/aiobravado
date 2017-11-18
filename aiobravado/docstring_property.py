@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Property decorator for the `__doc__` attribute.
 Useful for when you want a custom docstring for class instances
 while still showing a generic docstring for the class itself.

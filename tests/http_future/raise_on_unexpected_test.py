@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 from bravado_core.response import IncomingResponse
 from mock import Mock

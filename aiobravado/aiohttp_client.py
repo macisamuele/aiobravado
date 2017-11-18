@@ -7,8 +7,8 @@ from typing import NamedTuple
 from typing import Optional
 
 import aiohttp
-from bravado_core.response import IncomingResponse
 from aiohttp.formdata import FormData
+from bravado_core.response import IncomingResponse
 
 from aiobravado.http_client import HttpClient
 from aiobravado.http_future import FutureAdapter
