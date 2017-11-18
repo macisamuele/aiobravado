@@ -2,10 +2,10 @@
 Functional tests related to passing models in req/response
 """
 import pytest
+from bravado.compat import json
 from jsonschema.exceptions import ValidationError
 from mocket.plugins.httpretty import HTTPretty
 
-from aiobravado.compat import json
 from tests.functional.conftest import register_get
 from tests.functional.conftest import register_spec
 from tests.functional.conftest import swagger_client

@@ -6,10 +6,10 @@ from urllib.parse import urlparse
 from urllib.request import pathname2url
 
 from bravado import swagger_model
+from bravado.compat import json
 from bravado_core.spec import is_yaml
 
 from aiobravado.aiohttp_client import AiohttpClient
-from aiobravado.compat import json
 
 log = logging.getLogger(__name__)
 
