@@ -14,7 +14,7 @@ from tests.client.conftest import minimal_swagger_spec as build_swagger_spec
     ('timeout', 1),
     ('connect_timeout', 2),
 ])
-@patch('aiobravado.client.marshal_param')
+@patch('bravado.client.marshal_param')
 def test_with_timeouts(
     mock_marshal_param, minimal_swagger_spec,
     getPetById_spec, request_dict, timeout_kv,

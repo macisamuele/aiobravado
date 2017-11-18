@@ -7,7 +7,7 @@ from aiobravado.client import CallableOperation
 from aiobravado.client import construct_params
 
 
-@patch('aiobravado.client.marshal_param')
+@patch('bravado.client.marshal_param')
 def test_simple(mock_marshal_param, minimal_swagger_spec, getPetById_spec,
                 request_dict):
     request_dict['url'] = '/pet/{petId}'
@@ -17,7 +17,7 @@ def test_simple(mock_marshal_param, minimal_swagger_spec, getPetById_spec,
     assert 2 == mock_marshal_param.call_count
 
 
-@patch('aiobravado.client.marshal_param')
+@patch('bravado.client.marshal_param')
 def test_no_params(mock_marshal_param, minimal_swagger_spec, request_dict):
     get_op = minimal_swagger_spec.spec_dict['paths']['/pet/{petId}']['get']
     del get_op['parameters'][0]
@@ -49,7 +49,7 @@ def test_required_parameter_missing(
     assert 'required parameter' in str(excinfo.value)
 
 
-@patch('aiobravado.client.marshal_param')
+@patch('bravado.client.marshal_param')
 def test_validate_header_parameter_from_request_options(
         mock_marshal_param, minimal_swagger_spec, getPetById_spec, request_dict):
     request_dict['url'] = '/pet/{petId}'
@@ -61,7 +61,7 @@ def test_validate_header_parameter_from_request_options(
     assert 2 == mock_marshal_param.call_count
 
 
-@patch('aiobravado.client.marshal_param')
+@patch('bravado.client.marshal_param')
 def test_non_required_parameter_with_default_used(
         mock_marshal_param, minimal_swagger_spec, getPetById_spec,
         request_dict):
