@@ -3,15 +3,14 @@ from functools import wraps
 
 import six
 import umsgpack
+from bravado.exception import BravadoTimeoutError
+from bravado.exception import make_http_exception
 from bravado_core.content_type import APP_JSON
 from bravado_core.content_type import APP_MSGPACK
 from bravado_core.exception import MatchingResponseNotFound
 from bravado_core.response import get_response_spec
 from bravado_core.unmarshal import unmarshal_schema_object
 from bravado_core.validate import validate_schema_object
-
-from aiobravado.exception import BravadoTimeoutError
-from aiobravado.exception import make_http_exception
 
 
 class FutureAdapter(object):

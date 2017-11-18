@@ -1,13 +1,13 @@
 from functools import partial
 
 import pytest
+from bravado.exception import HTTPError
 from bravado_core.exception import MatchingResponseNotFound
 from bravado_core.operation import Operation
 from bravado_core.response import IncomingResponse
 from mock import Mock
 from mock import patch
 
-from aiobravado.exception import HTTPError
 from aiobravado.http_future import unmarshal_response
 
 

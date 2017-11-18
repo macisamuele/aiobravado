@@ -1,13 +1,13 @@
 import mock
 import pytest
 from aiohttp import ClientResponse
+from bravado.exception import HTTPError
+from bravado.exception import HTTPInternalServerError
+from bravado.exception import HTTPServerError
+from bravado.exception import make_http_exception
 
 from aiobravado.aiohttp_client import AioHTTPResponseAdapter
 from aiobravado.aiohttp_client import AsyncioResponse
-from aiobravado.exception import HTTPError
-from aiobravado.exception import HTTPInternalServerError
-from aiobravado.exception import HTTPServerError
-from aiobravado.exception import make_http_exception
 
 
 @pytest.fixture

@@ -4,12 +4,12 @@ import os.path
 import time
 
 import pytest
+from bravado.exception import HTTPBadRequest
+from bravado.exception import HTTPInternalServerError
+from bravado.exception import HTTPNotFound
 
 from aiobravado import aiohttp_client
 from aiobravado.client import SwaggerClient
-from aiobravado.exception import HTTPBadRequest
-from aiobravado.exception import HTTPInternalServerError
-from aiobravado.exception import HTTPNotFound
 
 
 @pytest.fixture

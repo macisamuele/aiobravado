@@ -5,10 +5,10 @@ import datetime
 import functools
 
 import pytest
+from bravado.exception import HTTPError
 from jsonschema.exceptions import ValidationError
 
 from aiobravado.compat import json
-from aiobravado.exception import HTTPError
 from tests.functional.conftest import register_get
 from tests.functional.conftest import register_spec
 from tests.functional.conftest import swagger_client

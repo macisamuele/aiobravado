@@ -1,8 +1,8 @@
 import pytest
+from bravado.exception import HTTPError
 from bravado_core.response import IncomingResponse
 from mock import Mock
 
-from aiobravado.exception import HTTPError
 from aiobravado.http_future import raise_on_unexpected
 
 
