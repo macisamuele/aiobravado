@@ -8,9 +8,9 @@ from typing import Optional
 
 import aiohttp
 from aiohttp.formdata import FormData
+from bravado.http_client import HttpClient
 from bravado_core.response import IncomingResponse
 
-from aiobravado.http_client import HttpClient
 from aiobravado.http_future import FutureAdapter
 from aiobravado.http_future import HttpFuture
 

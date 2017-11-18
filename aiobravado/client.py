@@ -68,7 +68,7 @@ class SwaggerClient(SyncSwaggerClient):
         :param spec_url: url pointing at the swagger API specification
         :type spec_url: str
         :param http_client: an HTTP client used to perform requests
-        :type  http_client: :class:`aiobravado.http_client.HttpClient`
+        :type  http_client: :class:`bravado.http_client.HttpClient`
         :param request_headers: Headers to pass with http requests
         :type  request_headers: dict
         :param config: Config dict for aiobravado and bravado_core.
