@@ -53,13 +53,34 @@ from bravado.client import ResourceDecorator  # noqa
 from bravado.client import Spec  # noqa
 from bravado.client import SwaggerClient as SyncSwaggerClient
 
-from aiobravado.aiohttp_client import AiohttpClient
+from aiobravado.aiohttp_client import AsyncHttpClient
 from aiobravado.swagger_model import AIOLoader
 
 log = logging.getLogger(__name__)
 
 
+def raise_if_http_client_in_not_async(http_client):
+    if isinstance(http_client, AsyncHttpClient):
+        raise ValueError(
+            '{http_client_type} is not inheriting from {AsyncHttpClient_module}.AsyncHttpClient.\n'
+            'Make sure to use a proper async HTTP client or consider to use bravado instead of aiobravado'.format(
+                http_client_type=type(http_client),
+                AsyncHttpClient_module=AsyncHttpClient.__module__,
+            )
+        )
+
+
 class SwaggerClient(SyncSwaggerClient):
+    def __init__(self, swagger_spec, also_return_response=False):
+        """
+        :param swagger_spec: bravado_core Spec object
+        :type swagger_spec: bravado_core.spec.Spec
+        :param also_return_response: return also raw response once result method is invoked
+        :type also_return_response: bool
+        """
+        raise_if_http_client_in_not_async(swagger_spec.http_client)
+        super(SwaggerClient, self).__init__(swagger_spec=swagger_spec, also_return_response=also_return_response)
+
     @classmethod
     async def from_url(cls, spec_url, http_client=None, request_headers=None, config=None):
         """Build a :class:`SwaggerClient` from a url to the Swagger
@@ -78,7 +99,8 @@ class SwaggerClient(SyncSwaggerClient):
         :rtype: :class:`bravado_core.spec.Spec`
         """
         log.debug('Loading from %s', spec_url)
-        http_client = http_client or AiohttpClient()
+        http_client = http_client or AsyncHttpClient()
+        raise_if_http_client_in_not_async(http_client)
         loader = AIOLoader(http_client, request_headers=request_headers)
         spec_dict = await loader.load_spec(spec_url)
 

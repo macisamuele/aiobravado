@@ -1,12 +1,13 @@
 import pytest
 
+from aiobravado.aiohttp_client import AsyncHttpClient
 from aiobravado.client import Spec
 from aiobravado.client import SwaggerClient
 
 
 @pytest.fixture
 def petstore_client(petstore_dict):
-    return SwaggerClient.from_spec(petstore_dict)
+    return SwaggerClient.from_spec(petstore_dict, http_client=AsyncHttpClient())
 
 
 @pytest.fixture

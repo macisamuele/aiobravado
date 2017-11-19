@@ -9,7 +9,7 @@ from bravado import swagger_model
 from bravado.compat import json
 from bravado_core.spec import is_yaml
 
-from aiobravado.aiohttp_client import AiohttpClient
+from aiobravado.aiohttp_client import AsyncHttpClient
 
 log = logging.getLogger(__name__)
 
@@ -104,7 +104,7 @@ async def load_url(spec_url, http_client=None, base_url=None):
     :raise: IOError, URLError: On error reading api-docs.
     """
     if http_client is None:
-        http_client = AiohttpClient()
+        http_client = AsyncHttpClient()
 
     loader = AIOLoader(http_client=http_client)
     return await loader.load_spec(spec_url, base_url=base_url)

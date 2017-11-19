@@ -70,7 +70,7 @@ class AioHTTPResponseAdapter(IncomingResponse):
         return await asyncio.wait_for(self._delegate.json(), timeout=self._remaining_timeout)
 
 
-class AiohttpClient(HttpClient):
+class AsyncHttpClient(HttpClient):
     """Asynchronous HTTP client using the asyncio event loop.
     """
 

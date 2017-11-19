@@ -1,7 +1,7 @@
 import mock
 import pytest
 
-from aiobravado.aiohttp_client import AiohttpClient
+from aiobravado.aiohttp_client import AsyncHttpClient
 
 
 @pytest.fixture(autouse=True)
@@ -17,7 +17,7 @@ def mock_client_session():
 
 @pytest.fixture
 def aiohttp_client(mock_client_session):
-    return AiohttpClient(client_session=mock_client_session)
+    return AsyncHttpClient(client_session=mock_client_session)
 
 
 @pytest.fixture

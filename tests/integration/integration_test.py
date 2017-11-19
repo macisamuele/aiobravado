@@ -19,7 +19,7 @@ def swagger_client(integration_server, event_loop):
     # Once this integration suite has become stable (i.e. we're happy with the approach and the test coverage)
     # it could move to bravado and test all major HTTP clients (requests, fido, asyncio).
     spec_url = '{}/swagger.yaml'.format(integration_server)
-    http_client = aiohttp_client.AiohttpClient(loop=event_loop)
+    http_client = aiohttp_client.AsyncHttpClient(loop=event_loop)
     client = event_loop.run_until_complete(
         SwaggerClient.from_url(
             spec_url,
@@ -172,7 +172,7 @@ async def test_asyncio_client(integration_server, event_loop):
     # schedule our first coroutine (after _test_asyncio_client) in the default event loop
     future = asyncio.ensure_future(sleep_coroutine())
     # more work for the default event loop
-    http_client = aiohttp_client.AiohttpClient(loop=event_loop)
+    http_client = aiohttp_client.AsyncHttpClient(loop=event_loop)
     client1 = await get_swagger_client(spec_url, http_client)
     client2 = await get_swagger_client(spec_url.replace('localhost', '127.0.0.1'), http_client)
 

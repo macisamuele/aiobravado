@@ -77,7 +77,7 @@ def httprettified():
 
 @pytest.fixture
 def http_client(event_loop):
-    http_client = aiohttp_client.AiohttpClient(loop=event_loop)
+    http_client = aiohttp_client.AsyncHttpClient(loop=event_loop)
     yield http_client
     http_client.client_session.close()
 

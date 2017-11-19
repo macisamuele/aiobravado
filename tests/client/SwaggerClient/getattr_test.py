@@ -1,5 +1,6 @@
 import pytest
 
+from aiobravado.aiohttp_client import AsyncHttpClient
 from aiobravado.client import ResourceDecorator
 from aiobravado.client import SwaggerClient
 
@@ -37,7 +38,7 @@ def client_tags_with_spaces():
                 }
             }
         }
-    })
+    }, http_client=AsyncHttpClient())
 
 
 def test_get_resource(client_tags_with_spaces):
