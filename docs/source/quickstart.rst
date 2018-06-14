@@ -22,7 +22,8 @@ Here is a simple example to try from a REPL (like IPython):
     from aiobravado.client import SwaggerClient
 
     client = await SwaggerClient.from_url("http://petstore.swagger.io/v2/swagger.json")
-    pet = await client.pet.getPetById(petId=42).result()
+    bravado_response = await client.pet.getPetById(petId=42).response()
+    pet = bravado_response.result
 
 If you were lucky, and pet Id with 42 was present, you will get back a result.
 It will be a dynamically created instance of ``aiobravado.model.Pet`` with attributes ``category``, etc. You can even try ``pet.category.id`` or ``pet.tags[0]``.
@@ -44,7 +45,8 @@ Here we will demonstrate how ``aiobravado`` hides all the ``JSON`` handling from
         Pet = client.get_model('Pet')
         Category = client.get_model('Category')
         pet = Pet(id=42, name="tommy", category=Category(id=24))
-        await client.pet.addPet(body=pet).result()
+        bravado_response = await client.pet.addPet(body=pet).response()
+        bravado_response.result
 
 
 This is too fancy for me! I want a simple dict response!

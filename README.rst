@@ -36,8 +36,9 @@ Example Usage
 .. code-block:: Python
 
     from aiobravado.client import SwaggerClient
-    client = await SwaggerClient.from_url('http://petstore.swagger.io/v2/swagger.json')
-    pet = await client.pet.getPetById(petId=42).result(timeout=5)
+    client = SwaggerClient.from_url('http://petstore.swagger.io/v2/swagger.json')
+    pet_response = await client.pet.getPetById(petId=42).response()
+    pet = pet_response.result
 
 Documentation
 -------------

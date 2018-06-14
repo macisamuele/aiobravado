@@ -55,8 +55,8 @@ from bravado_core.spec import Spec
 from six import iteritems
 from six import itervalues
 
-from aiobravado.config_defaults import CONFIG_DEFAULTS
-from aiobravado.config_defaults import REQUEST_OPTIONS_DEFAULTS
+from aiobravado.config import BravadoConfig
+from aiobravado.config import RequestConfig
 from aiobravado.docstring_property import docstring_property
 from aiobravado.swagger_model import Loader
 from aiobravado.warning import warn_for_deprecated_op
@@ -121,15 +121,20 @@ class SwaggerClient(object):
         :rtype: :class:`bravado_core.spec.Spec`
         """
         http_client = http_client or AsyncioClient(run_mode=RunMode.FULL_ASYNCIO)
+        config = config or {}
 
-        # Apply aiobravado config defaults
-        config = dict(CONFIG_DEFAULTS, **(config or {}))
+        # Apply bravado config defaults
+        bravado_config = BravadoConfig.from_config_dict(config)
+        # remove bravado configs from config dict
+        for key in set(bravado_config._fields).intersection(set(config)):
+            del config[key]
+        # set bravado config object
+        config['bravado'] = bravado_config
 
-        also_return_response = config.pop('also_return_response', False)
         swagger_spec = Spec.from_dict(
             spec_dict, origin_url, http_client, config,
         )
-        return cls(swagger_spec, also_return_response=also_return_response)
+        return cls(swagger_spec, also_return_response=bravado_config.also_return_response)
 
     def get_model(self, model_name):
         return self.swagger_spec.definitions[model_name]
@@ -235,27 +240,20 @@ class CallableOperation(object):
         log.debug(u'%s(%s)', self.operation.operation_id, op_kwargs)
         warn_for_deprecated_op(self.operation)
 
-        # Apply request_options defaults
-        request_options = dict(
-            REQUEST_OPTIONS_DEFAULTS,
-            **(op_kwargs.pop('_request_options', {})))
+        # Get per-request config
+        request_options = op_kwargs.pop('_request_options', {})
+        request_config = RequestConfig(request_options, self.also_return_response)
 
         request_params = construct_request(
             self.operation, request_options, **op_kwargs)
 
         http_client = self.operation.swagger_spec.http_client
 
-        # Per-request config overrides client wide config
-        also_return_response = request_options.get(
-            'also_return_response',
-            self.also_return_response,
-        )
-
         return http_client.request(
             request_params,
             operation=self.operation,
-            response_callbacks=request_options['response_callbacks'],
-            also_return_response=also_return_response)
+            request_config=request_config,
+        )
 
 
 def construct_request(operation, request_options, **op_kwargs):

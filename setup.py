@@ -30,7 +30,7 @@ setup(
     ],
     install_requires=[
         'bravado-asyncio >= 0.4.0',
-        'bravado-core >= 4.11.0',
+        'bravado-core >= 5.0.1',
         'msgpack-python',
         'python-dateutil',
         'pyyaml',

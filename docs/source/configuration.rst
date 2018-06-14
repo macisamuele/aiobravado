@@ -18,18 +18,25 @@ is available too.
     config = {
         # === aiobravado config ===
 
-        # Determines what is returned by the service call.
+        # What class to use for response metadata
+        'response_metadata_class': 'bravado.response.BravadoResponseMetadata',
+
+        # Do not use fallback results even if they're provided
+        'disable_fallback_results': False,
+
+        # DEPRECATED: Determines what is returned by HttpFuture.result().
+        # Please use HttpFuture.response() for accessing the http response.
         'also_return_response': False,
 
         # === bravado-core config ====
 
-        #  validate incoming responses
+        # Validate incoming responses
         'validate_responses': True,
 
-        # validate outgoing requests
+        # Validate outgoing requests
         'validate_requests': True,
 
-        # validate the swagger spec
+        # Validate the swagger spec
         'validate_swagger_spec': True,
 
         # Use models (Python classes) instead of dicts for #/definitions/{models}
@@ -43,16 +50,27 @@ is available too.
     client = SwaggerClient.from_url(..., config=config)
 
 
-========================= =============== =========  ===============================================================
-Config key                Type            Default    Description
-------------------------- --------------- ---------  ---------------------------------------------------------------
-*also_return_response*    boolean         False      | Determines what is returned by the service call.
-                                                     | Specifically, the return value of ``HttpFuture.result()``.
-                                                     | When ``False``, the swagger result is returned.
-                                                     | When ``True``, the tuple ``(swagger result, http response)``
-                                                     | is returned.
-                                                     | See :ref:`getting_access_to_the_http_response`.
-========================= =============== =========  ===============================================================
+========================== =============== ===============================================================
+Config key                 Type            Description
+-------------------------- --------------- ---------------------------------------------------------------
+*response_metadata_class*  string          | The Metadata class to use; see
+                                           | :ref:`custom_response_metadata` for details.
+                                           Default: :class:`bravado.response.BravadoResponseMetadata`
+*disable_fallback_results* boolean         | Whether to disable returning fallback results, even if
+                                           | they're provided as an argument to
+                                           | to :meth:`.HttpFuture.response`.
+                                           Default: ``False``
+*also_return_response*     boolean         | Determines what is returned by the service call.
+                                           | Specifically, the return value of :meth:`.HttpFuture.result`.
+                                           | When ``False``, the swagger result is returned.
+                                           | When ``True``, the tuple ``(swagger result, http response)``
+                                           | is returned. Has no effect on the return value of
+                                           | :meth:`.HttpFuture.response`.
+                                           | See :ref:`getting_access_to_the_http_response`.
+                                           Default: ``False``
+========================== =============== ===============================================================
+
+.. _request_configuration:
 
 Per-request Configuration
 --------------------------
@@ -63,7 +81,7 @@ Configuration can also be applied on a per-request basis by passing in
 
     client = SwaggerClient.from_url(...)
     request_options = { ... }
-    client.pet.getPetById(petId=42, _request_options=request_options).result()
+    client.pet.getPetById(petId=42, _request_options=request_options).response().result
 
 ========================= =============== =========  ===============================================================
 Config key                Type            Default    Description
@@ -84,4 +102,7 @@ Config key                Type            Default    Description
                                                      | http_client when making a service call.
 *use_msgpack*             boolean         False      | If a msgpack serialization is desired for the response. This
                                                      | will add a Accept: application/msgpack header to the request.
+*force_fallback_result*   boolean         False      | Whether a potentially provided fallback result should always
+                                                     | be returned, regardless of whether the request succeeded.
+                                                     | Mainly useful for manual and automated testing.
 ========================= =============== =========  ===============================================================

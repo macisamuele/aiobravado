@@ -3,11 +3,21 @@ bravado Package
 
 :mod:`aiobravado` Package
 ----------------------
+.. toctree::
+   :maxdepth: 4
 
 :mod:`client` Module
 --------------------
 
 .. automodule:: aiobravado.client
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`config` Module
+--------------------
+
+.. automodule:: aiobravado.config
     :members:
     :undoc-members:
     :show-inheritance:
@@ -32,6 +42,14 @@ bravado Package
 -------------------------
 
 .. automodule:: aiobravado.http_future
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`response` Module
+-------------------------
+
+.. automodule:: aiobravado.response
     :members:
     :undoc-members:
     :show-inheritance:

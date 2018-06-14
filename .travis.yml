@@ -11,7 +11,7 @@ matrix:
   - env: TOXENV=cover
     python: "3.6"
   - env: TOXENV=docs
-  - env: TOXENV=flake8
+  - env: TOXENV=pre-commit
     python: "3.6"
 
 install:

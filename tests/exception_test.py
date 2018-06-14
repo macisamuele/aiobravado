@@ -5,9 +5,14 @@ from aiohttp import ClientResponse
 from bravado_asyncio.definitions import AsyncioResponse
 from bravado_asyncio.response_adapter import AsyncioHTTPResponseAdapter
 
+from aiobravado.exception import HTTPClientError
 from aiobravado.exception import HTTPError
+from aiobravado.exception import HTTPForbidden
 from aiobravado.exception import HTTPInternalServerError
+from aiobravado.exception import HTTPMovedPermanently
+from aiobravado.exception import HTTPRedirection
 from aiobravado.exception import HTTPServerError
+from aiobravado.exception import HTTPServiceUnavailable
 from aiobravado.exception import make_http_exception
 
 
@@ -62,11 +67,23 @@ def test_make_http_exception(response_500):
     assert str(exc) == "500 Server Error: Holy moly!: {'msg': 'Kaboom'}"
 
 
-def test_make_http_exception_unknown():
+@pytest.mark.parametrize(
+    'status_code, expected_type',
+    [
+        [301, HTTPMovedPermanently],
+        [399, HTTPRedirection],
+        [403, HTTPForbidden],
+        [499, HTTPClientError],
+        [503, HTTPServiceUnavailable],
+        [599, HTTPServerError],
+        [600, HTTPError],
+    ],
+)
+def test_make_http_exception_type(status_code, expected_type):
     mocked_response = mock.Mock(autospec=ClientResponse)
-    mocked_response.status = 600
-    mocked_response.reason = 'Womp Error'
+    mocked_response.status_code = status_code
+    mocked_response.reason = "Womp Error"
     exc = make_http_exception(
         AsyncioHTTPResponseAdapter(None)(mocked_response),
     )
-    assert type(exc) == HTTPError
+    assert type(exc) == expected_type

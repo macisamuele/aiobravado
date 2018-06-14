@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+import logging
 import sys
+import traceback
 from functools import wraps
+from itertools import chain
 
+import monotonic
 import six
 from bravado_core.content_type import APP_JSON
 from bravado_core.content_type import APP_MSGPACK
@@ -11,9 +15,21 @@ from bravado_core.unmarshal import unmarshal_schema_object
 from bravado_core.validate import validate_schema_object
 from msgpack import unpackb
 
-from aiobravado.config_defaults import REQUEST_OPTIONS_DEFAULTS
+from aiobravado.config import RequestConfig
 from aiobravado.exception import BravadoTimeoutError
+from aiobravado.exception import ForcedFallbackResultError
+from aiobravado.exception import HTTPServerError
 from aiobravado.exception import make_http_exception
+from aiobravado.response import BravadoResponse
+
+
+log = logging.getLogger(__name__)
+
+
+FALLBACK_EXCEPTIONS = (
+    BravadoTimeoutError,
+    HTTPServerError,
+)
 
 
 class FutureAdapter(object):
@@ -81,25 +97,20 @@ class HttpFuture():
         response in a non-http client specific way.
     :type response_adapter: type that is a subclass of
         :class:`bravado_core.response.IncomingResponse`.
-    :param response_callbacks: See aiobravado.client.REQUEST_OPTIONS_DEFAULTS
-    :param also_return_response: Determines if the incoming http response is
-        included as part of the return value from calling
-        `HttpFuture.result()`.
-        When False, only the swagger result is returned.
-        When True, the tuple(swagger result, http response) is returned.
-        This is useful if you want access to additional data that is not
-        accessible from the swagger result. e.g. http headers,
-        http response code, etc.
-        Defaults to False for backwards compatibility.
+    :param RequestConfig request_config: See :class:`bravado.config.RequestConfig` and
+        :data:`bravado.client.REQUEST_OPTIONS_DEFAULTS`
     """
 
     def __init__(self, future, response_adapter, operation=None,
-                 response_callbacks=None, also_return_response=False):
+                 request_config=None):
+        self._start_time = monotonic.monotonic()
         self.future = future
         self.response_adapter = response_adapter
         self.operation = operation
-        self.response_callbacks = response_callbacks or REQUEST_OPTIONS_DEFAULTS['response_callbacks']
-        self.also_return_response = also_return_response
+        self.request_config = request_config or RequestConfig(
+            {},
+            also_return_response_default=False,
+        )
 
     @reraise_errors
     async def result(self, timeout=None):
@@ -111,17 +122,12 @@ class HttpFuture():
         :return: Depends on the value of also_return_response sent in
             to the constructor.
         """
-        inner_response = await self.future.result(timeout=timeout)
-        incoming_response = self.response_adapter(inner_response)
+
+        incoming_response = await self._get_incoming_response(timeout)
+        swagger_result = await self._get_swagger_result(incoming_response)
 
         if self.operation is not None:
-            await unmarshal_response(
-                incoming_response,
-                self.operation,
-                self.response_callbacks)
-
-            swagger_result = incoming_response.swagger_result
-            if self.also_return_response:
+            if self.request_config.also_return_response:
                 return swagger_result, incoming_response
             return swagger_result
 
@@ -129,6 +135,98 @@ class HttpFuture():
             return incoming_response
 
         raise make_http_exception(response=incoming_response)
+
+    async def response(self, timeout=None, fallback_result=None, exceptions_to_catch=FALLBACK_EXCEPTIONS):
+        """Blocking call to wait for the HTTP response.
+
+        :param timeout: Number of seconds to wait for a response. Defaults to
+            None which means wait indefinitely.
+        :type timeout: float
+        :param fallback_result: callable that accepts an exception as argument and returns the
+            swagger result to use in case of errors
+        :type fallback_result: callable that takes an exception and returns a fallback swagger result
+        :param exceptions_to_catch: Exception classes to catch and call `fallback_result`
+            with. Has no effect if `fallback_result` is not provided. By default, `fallback_result`
+            will be called for read timeout and server errors (HTTP 5XX).
+        :type exceptions_to_catch: List/Tuple of Exception classes.
+        :return: A BravadoResponse instance containing the swagger result and response metadata.
+
+        WARNING: This interface is considered UNSTABLE. Backwards-incompatible API changes may occur;
+        use at your own risk.
+        """
+        incoming_response = None
+        exc_info = None
+        request_end_time = None
+        if self.request_config.force_fallback_result:
+            exceptions_to_catch = tuple(chain(exceptions_to_catch, (ForcedFallbackResultError,)))
+
+        try:
+            incoming_response = await self._get_incoming_response(timeout)
+            request_end_time = monotonic.monotonic()
+
+            swagger_result = await self._get_swagger_result(incoming_response)
+
+            if self.operation is None and incoming_response.status_code >= 300:
+                raise make_http_exception(response=incoming_response)
+
+            # Trigger fallback_result if the option is set
+            if fallback_result and self.request_config.force_fallback_result:
+                if self.operation.swagger_spec.config['bravado'].disable_fallback_results:
+                    log.warning(
+                        'force_fallback_result set in request options and disable_fallback_results '
+                        'set in client config; not using fallback result.'
+                    )
+                else:
+                    # raise an exception to trigger fallback result handling
+                    raise ForcedFallbackResultError()
+
+        except exceptions_to_catch as e:
+            if request_end_time is None:
+                request_end_time = monotonic.monotonic()
+            # the Python 2 documentation states that we shouldn't assign the traceback to a local variable,
+            # as that would cause a circular reference. We'll store a string representation of the traceback
+            # instead.
+            exc_info = list(sys.exc_info()[:2])
+            exc_info.append(traceback.format_exc())
+            if (
+                fallback_result and self.operation
+                and not self.operation.swagger_spec.config['bravado'].disable_fallback_results
+            ):
+                swagger_result = fallback_result(e)
+            else:
+                six.reraise(*sys.exc_info())
+
+        metadata_class = self.operation.swagger_spec.config['bravado'].response_metadata_class
+        response_metadata = metadata_class(
+            incoming_response=incoming_response,
+            swagger_result=swagger_result,
+            start_time=self._start_time,
+            request_end_time=request_end_time,
+            handled_exception_info=exc_info,
+            request_config=self.request_config,
+        )
+        return BravadoResponse(
+            result=swagger_result,
+            metadata=response_metadata,
+        )
+
+    @reraise_errors
+    async def _get_incoming_response(self, timeout=None):
+        inner_response = await self.future.result(timeout=timeout)
+        incoming_response = self.response_adapter(inner_response)
+        return incoming_response
+
+    async def _get_swagger_result(self, incoming_response):
+        swagger_result = None
+        if self.operation is not None:
+            await unmarshal_response(
+                incoming_response,
+                self.operation,
+                self.request_config.response_callbacks,
+            )
+            swagger_result = incoming_response.swagger_result
+
+        return swagger_result
 
 
 async def unmarshal_response(incoming_response, operation, response_callbacks=None):
